@@ -136,8 +136,55 @@ __global__ void qk_scores(const float* q,
     }
 }
 
-# Step 10 - softmax_rows (not yet solved)
-# TODO: implement
+# Step 10 - softmax_rows
+__global__ void softmax_rows(float* matrix, int rows, int cols)
+{
+    // One thread handles one row
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (row >= rows)
+        return;
+
+    int offset = row * cols;
+
+    // --------------------------------------------------
+    // 1. Find maximum value in this row
+    // --------------------------------------------------
+
+    float max_val = matrix[offset];
+
+    for (int col = 1; col < cols; col++)
+    {
+        float value = matrix[offset + col];
+
+        if (value > max_val)
+            max_val = value;
+    }
+
+    // --------------------------------------------------
+    // 2. Compute exp(x - max) and sum
+    // --------------------------------------------------
+
+    float sum = 0.0f;
+
+    for (int col = 0; col < cols; col++)
+    {
+        float value = expf(matrix[offset + col] - max_val);
+
+        matrix[offset + col] = value;
+
+        sum += value;
+    }
+
+    // --------------------------------------------------
+    // 3. Normalize
+    // --------------------------------------------------
+
+    for (int col = 0; col < cols; col++)
+    {
+        matrix[offset + col] /= sum;
+    }
+}
 
 # Step 11 - pv_matmul (not yet solved)
 # TODO: implement
